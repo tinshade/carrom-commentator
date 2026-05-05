@@ -13,12 +13,12 @@ Carrom is a classic board game, but scoring live matches is tedious and commenta
 - **Accurate scoring** — rules engine enforces 3-player FFA or 4-player partner scoring with queen mechanics, fouls, and game-end detection
 - **Local first** — runs fully offline (Ollama LLM + pyttsx3 TTS) or upgrade to cloud providers (Anthropic, OpenAI, ElevenLabs) with one config change
 
-## What You'll Get (Milestone 1 Complete)
+## What's Built So Far
 
-- ✅ **Domain + Scoring rules** — frozen dataclasses, pure state transitions, tested with property-based tests
+- ✅ **Domain + Scoring rules** — frozen dataclasses, pure state transitions, property-based tests
 - ✅ **CLI event replayer** — feed JSON event logs, see final scores and match state
-- ✅ **71 unit tests** — comprehensive coverage of 3P and 4P rules, queen mechanics, fouls, game end
-- 🔜 **Persistence** (Milestone 2) — player groups, match history via SQLite
+- ✅ **Persistence + Player Groups** — SQLite via SQLAlchemy Core; save/load player groups and match history
+- ✅ **111 unit tests** — domain, scoring rules, and persistence (Fake + SQLite, parametrized)
 - 🔜 **Commentary engine** (Milestone 3) — LLM + TTS with debouncing and priority queuing
 - 🔜 **Vision pipeline** (Milestone 4) — coin detection, tracking, event generation from phone camera
 - 🔜 **UI** (Milestone 6) — PySide6 desktop app with setup screen, live view, score lookup
@@ -44,23 +44,45 @@ Carrom is a classic board game, but scoring live matches is tedious and commenta
 
 - **Windows 11** (or Windows 10)
 - **Python 3.11+** (tested on 3.12)
-- **uv** package manager (auto-installed or get it via `pip install uv`)
+- **uv** package manager — install via `pip install uv`
 - **Phone** with IP Webcam app (Android: free; iOS: EpocCam/Iriun ~$3–5)
 
 ### Clone & Setup
 
-```bash
-cd \<your project folder>\carrom-caster
+```powershell
+cd <your project folder>\carrom-caster
 
-# Install dependencies (creates .venv)
+# Install dependencies (creates .venv automatically)
 uv sync
 
-# Run tests (should see 71 passed)
+# Run all unit tests (should see 111 passed)
 uv run pytest tests/unit/ -v
 
 # Test the CLI on a sample match
 uv run python -m carrom_caster.scripts.score_from_events scripts/sample_events_3p.json
 ```
+
+### Running the App
+
+> **Note:** Full app launch (`python -m carrom_caster`) requires Milestone 5 (vision pipeline wired). Currently only the scoring CLI is runnable.
+
+**Score a match from a JSON event log (Milestone 1):**
+
+```powershell
+uv run python -m carrom_caster.scripts.score_from_events path\to\events.json
+```
+
+**Offline mode** (default) — no API keys needed. Uses Ollama (local LLM) + pyttsx3 (Windows TTS).
+
+**Cloud providers** — uncomment keys in `.env`:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+ELEVENLABS_API_KEY=...
+```
+
+Then set `llm_provider` / `tts_provider` in `config/default.yaml`.
 
 ### Expected CLI Output (3P sample)
 
@@ -94,21 +116,22 @@ uv run python -m carrom_caster.scripts.score_from_events scripts/sample_events_4
 ```
 carrom-caster/
 ├── pyproject.toml          # uv project config, dependencies
+├── .env                    # secrets (gitignored) — API keys
 ├── config/
-│   ├── default.yaml        # board dims, HSV ranges, LLM/TTS settings
+│   ├── default.yaml        # board dims, HSV ranges, LLM/TTS/DB settings
 │   └── prompts/wwe_commentary.txt
 ├── src/carrom_caster/
 │   ├── domain/             # frozen dataclasses (Coin, Event, Player, MatchState)
 │   ├── scoring/            # rules engines (3P FFA, 4P partners) + Scorer
+│   ├── persistence/        # ✅ schema.py (SQLAlchemy Core tables) + repositories.py
 │   ├── scripts/
 │   │   └── score_from_events.py  # CLI: JSON → score
 │   ├── vision/             # [future] detector, tracker, event_detector
 │   ├── commentary/         # [future] llm, tts, engine
-│   ├── persistence/        # [future] db, repositories
 │   ├── ui/                 # [future] PySide6 screens
 │   └── utils/
 └── tests/
-    ├── unit/               # 71 tests (domain + scoring)
+    ├── unit/               # 111 tests (domain + scoring + persistence)
     └── integration/        # [future] video clips
 ```
 
@@ -246,7 +269,7 @@ Both rules behind `ScoringRules` Protocol for easy extension.
 Each milestone is shippable on its own.
 
 1. ✅ **Domain + Scoring** — JSON event log → score (CLI)
-2. 🔜 **Persistence + Player Groups** — SQLite, group suggestions
+2. ✅ **Persistence + Player Groups** — SQLite via SQLAlchemy Core, save/load groups + match history
 3. 🔜 **Commentary Engine** — LLM + TTS, debouncing
 4. 🔜 **Vision Pipeline** — phone camera → events
 5. 🔜 **Wire Headless** — full pipeline from camera to score + audio
@@ -347,8 +370,6 @@ uv run python -m carrom_caster.scripts.score_from_events scripts/sample_events_3
 
 ## Next Steps
 
-- **Read CLAUDE.md** for full architecture + conventions
-- **Review IMPLEMENTATION_PLAN.md** for detailed design of each stage
 - **Run tests** to validate the scoring rules
 - **Explore the code** — start with `src/carrom_caster/domain/match.py` to understand MatchState
 

@@ -61,6 +61,10 @@ camera:
   fps_target: 30
   resolution: [1280, 720]
 
+# ── Persistence ───────────────────────────────────────────────────────────────
+persistence:
+  db_path: data/carrom.db
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging:
   level: INFO
