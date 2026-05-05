@@ -1,0 +1,11 @@
+.venv
+.hypothesis
+.pytest*
+.ruff_cache
+.claude
+CLAUDE.md
+context.md
+IMPLEMENTATION_PLAN.md
+.env
+*.pyc
+*.lock

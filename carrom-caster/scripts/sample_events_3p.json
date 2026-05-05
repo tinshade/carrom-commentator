@@ -1,0 +1,22 @@
+{
+  "match_id": "11111111-0000-0000-0000-000000000001",
+  "mode": "3P_FFA",
+  "players": [
+    {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Alice"},
+    {"id": "bbbbbbbb-0000-0000-0000-000000000002", "name": "Bob"},
+    {"id": "cccccccc-0000-0000-0000-000000000003", "name": "Charlie"}
+  ],
+  "teams": [],
+  "events": [
+    {"type": "COIN_POCKETED",   "timestamp": "2024-01-01T10:00:01", "frame_index": 30,  "payload": {"color": "white", "coin_id": "w1", "pocket_corner": "top_left"}},
+    {"type": "COIN_POCKETED",   "timestamp": "2024-01-01T10:00:02", "frame_index": 60,  "payload": {"color": "black", "coin_id": "b1", "pocket_corner": "top_right"}},
+    {"type": "TURN_ENDED",      "timestamp": "2024-01-01T10:00:04", "frame_index": 120, "payload": {}},
+    {"type": "COIN_POCKETED",   "timestamp": "2024-01-01T10:00:06", "frame_index": 180, "payload": {"color": "black", "coin_id": "b2", "pocket_corner": "bottom_left"}},
+    {"type": "TURN_ENDED",      "timestamp": "2024-01-01T10:00:08", "frame_index": 240, "payload": {}},
+    {"type": "QUEEN_POCKETED",  "timestamp": "2024-01-01T10:00:10", "frame_index": 300, "payload": {"pocket_corner": "top_left"}},
+    {"type": "COIN_POCKETED",   "timestamp": "2024-01-01T10:00:11", "frame_index": 330, "payload": {"color": "white", "coin_id": "w2", "pocket_corner": "bottom_right"}},
+    {"type": "TURN_ENDED",      "timestamp": "2024-01-01T10:00:13", "frame_index": 390, "payload": {}},
+    {"type": "STRIKER_POCKETED","timestamp": "2024-01-01T10:00:15", "frame_index": 450, "payload": {"pocket_corner": "top_right"}},
+    {"type": "TURN_ENDED",      "timestamp": "2024-01-01T10:00:17", "frame_index": 510, "payload": {}}
+  ]
+}

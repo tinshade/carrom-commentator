@@ -1,0 +1,67 @@
+# ── Scoring ──────────────────────────────────────────────────────────────────
+scoring:
+  rules_variant: indian_standard   # indian_standard | icf | house
+  queen_points: 3
+  foul_points: -1                  # penalty for striker pocketed
+  initial_white_coins: 9
+  initial_black_coins: 9
+  # Queen cover must happen in the same turn as the queen pocket.
+  queen_cover_same_turn: true
+
+  # 4P only
+  boards_to_win: 2                 # best-of-3 → first to 2 boards wins
+
+# ── Vision ────────────────────────────────────────────────────────────────────
+vision:
+  # HSV color ranges (hue 0-179, sat/val 0-255)
+  # Tuned for standard green carrom board under indoor lighting.
+  # Recalibrate via the color-wizard on first run.
+  colors:
+    white:
+      lower: [0, 0, 180]
+      upper: [179, 60, 255]
+    black:
+      lower: [0, 0, 0]
+      upper: [179, 255, 60]
+    queen:
+      lower: [0, 120, 80]
+      upper: [10, 255, 255]
+
+  # Pocket detection (normalized board coords 0-1)
+  pockets:
+    top_left:     [0.04, 0.04]
+    top_right:    [0.96, 0.04]
+    bottom_left:  [0.04, 0.96]
+    bottom_right: [0.96, 0.96]
+
+  pocket_radius: 0.06              # pocket detection zone radius in normalized coords
+
+  # Tracker
+  disappear_frames: 5              # frames coin must be absent before "pocketed"
+  max_centroid_distance: 0.05      # max normalized distance for Hungarian assignment
+
+  # EventDetector
+  strike_velocity_threshold: 0.02  # normalized coords/frame
+  settle_velocity_threshold: 0.002
+  settle_frames: 10                # frames below threshold before TURN_ENDED
+
+# ── Commentary ────────────────────────────────────────────────────────────────
+commentary:
+  llm_provider: ollama             # ollama | anthropic | openai
+  ollama_model: llama3.2:3b
+  tts_provider: pyttsx3            # pyttsx3 | elevenlabs
+  max_tokens: 60                   # keep commentary short for low latency
+  prompt_path: config/prompts/wwe_commentary.txt
+  debounce_ms: 500                 # ignore same event within this window
+
+# ── Camera ────────────────────────────────────────────────────────────────────
+camera:
+  # Android IP Webcam default. Update with your phone's IP.
+  url: "http://192.168.1.100:8080/video"
+  fps_target: 30
+  resolution: [1280, 720]
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging:
+  level: INFO
+  format: json                     # json | console

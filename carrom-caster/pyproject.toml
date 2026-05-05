@@ -1,0 +1,61 @@
+[project]
+name = "carrom-caster"
+version = "0.1.0"
+description = "Live WWE-style commentary and scoring for carrom games"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "structlog>=24.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+vision = [
+    "opencv-python>=4.8",
+    "scipy>=1.11",
+    "numpy>=1.25",
+]
+ui = [
+    "pyside6>=6.6",
+]
+commentary = [
+    "pyttsx3>=2.90",
+    "ollama>=0.3",
+    "anthropic>=0.25",
+    "openai>=1.12",
+    "elevenlabs>=1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/carrom_caster"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src/carrom_caster/domain", "src/carrom_caster/scoring"]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4",
+    "pytest-mock>=3.12",
+    "hypothesis>=6.100",
+    "mypy>=1.8",
+    "ruff>=0.3",
+]

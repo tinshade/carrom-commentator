@@ -1,0 +1,25 @@
+{
+  "match_id": "22222222-0000-0000-0000-000000000002",
+  "mode": "4P_PARTNERS",
+  "players": [
+    {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Alice"},
+    {"id": "bbbbbbbb-0000-0000-0000-000000000002", "name": "Bob"},
+    {"id": "cccccccc-0000-0000-0000-000000000003", "name": "Charlie"},
+    {"id": "dddddddd-0000-0000-0000-000000000004", "name": "Diana"}
+  ],
+  "teams": [
+    {"id": "team_white", "name": "Team White (Alice+Charlie)", "player_indices": [0, 2]},
+    {"id": "team_black", "name": "Team Black (Bob+Diana)",    "player_indices": [1, 3]}
+  ],
+  "events": [
+    {"type": "COIN_POCKETED",  "timestamp": "2024-01-01T10:00:01", "frame_index": 30,  "payload": {"color": "white", "coin_id": "w1"}},
+    {"type": "TURN_ENDED",     "timestamp": "2024-01-01T10:00:03", "frame_index": 90,  "payload": {}},
+    {"type": "COIN_POCKETED",  "timestamp": "2024-01-01T10:00:05", "frame_index": 150, "payload": {"color": "black", "coin_id": "b1"}},
+    {"type": "TURN_ENDED",     "timestamp": "2024-01-01T10:00:07", "frame_index": 210, "payload": {}},
+    {"type": "COIN_POCKETED",  "timestamp": "2024-01-01T10:00:09", "frame_index": 270, "payload": {"color": "black", "coin_id": "b2"}},
+    {"type": "TURN_ENDED",     "timestamp": "2024-01-01T10:00:11", "frame_index": 330, "payload": {}},
+    {"type": "QUEEN_POCKETED", "timestamp": "2024-01-01T10:00:13", "frame_index": 390, "payload": {}},
+    {"type": "COIN_POCKETED",  "timestamp": "2024-01-01T10:00:14", "frame_index": 420, "payload": {"color": "black", "coin_id": "b3"}},
+    {"type": "TURN_ENDED",     "timestamp": "2024-01-01T10:00:16", "frame_index": 480, "payload": {}}
+  ]
+}
