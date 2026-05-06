@@ -13,15 +13,16 @@ Carrom is a classic board game, but scoring live matches is tedious and commenta
 - **Accurate scoring** — rules engine enforces 3-player FFA or 4-player partner scoring with queen mechanics, fouls, and game-end detection
 - **Local first** — runs fully offline (Ollama LLM + pyttsx3 TTS) or upgrade to cloud providers (Anthropic, OpenAI, ElevenLabs) with one config change
 
-## What's Built So Far
+## What's Built
 
 - ✅ **Domain + Scoring rules** — frozen dataclasses, pure state transitions, property-based tests
 - ✅ **CLI event replayer** — feed JSON event logs, see final scores and match state
 - ✅ **Persistence + Player Groups** — SQLite via SQLAlchemy Core; save/load player groups and match history
-- ✅ **111 unit tests** — domain, scoring rules, and persistence (Fake + SQLite, parametrized)
-- 🔜 **Commentary engine** (Milestone 3) — LLM + TTS with debouncing and priority queuing
-- 🔜 **Vision pipeline** (Milestone 4) — coin detection, tracking, event generation from phone camera
-- 🔜 **UI** (Milestone 6) — PySide6 desktop app with setup screen, live view, score lookup
+- ✅ **Commentary engine** — LLM + TTS with debouncing; pluggable providers (Ollama, Anthropic, OpenAI, ElevenLabs)
+- ✅ **Vision pipeline** — HSV coin detection, Hungarian-algorithm tracker, state-machine event detector; tested on recorded clips
+- ✅ **Full headless pipeline** — phone camera → vision → scorer + commentary → SQLite, all wired in `app.py`
+- ✅ **PySide6 desktop UI** — setup screen, live match screen, score lookup screen
+- ✅ **165 unit tests** — domain, scoring, persistence, commentary, vision (Fake + SQLite, property-based)
 
 ## Tech Stack
 
@@ -52,29 +53,39 @@ Carrom is a classic board game, but scoring live matches is tedious and commenta
 ```powershell
 cd <your project folder>\carrom-caster
 
-# Install dependencies (creates .venv automatically)
-uv sync
+# Install all dependencies including UI, vision, commentary
+uv sync --extra vision --extra commentary --extra ui
 
-# Run all unit tests (should see 111 passed)
+# Run all unit tests (should see 165 passed)
 uv run pytest tests/unit/ -v
-
-# Test the CLI on a sample match
-uv run python -m carrom_caster.scripts.score_from_events scripts/sample_events_3p.json
 ```
 
 ### Running the App
 
-> **Note:** Full app launch (`python -m carrom_caster`) requires Milestone 5 (vision pipeline wired). Currently only the scoring CLI is runnable.
-
-**Score a match from a JSON event log (Milestone 1):**
+**Desktop UI (default):**
 
 ```powershell
-uv run python -m carrom_caster.scripts.score_from_events path\to\events.json
+uv run python -m carrom_caster
+```
+
+Opens the setup screen. Enter player names, set the IP Webcam URL, pick providers, and click **Start Match**.
+
+**Headless CLI (no UI):**
+
+```powershell
+uv run python -m carrom_caster --headless --players Alice Bob Charlie
+uv run python -m carrom_caster --headless --players Alice Bob Charlie Dave --mode 4P_PARTNERS --dry-run
+```
+
+**Score a match from a JSON event log:**
+
+```powershell
+uv run python -m carrom_caster.scripts.score_from_events scripts/sample_events_3p.json
 ```
 
 **Offline mode** (default) — no API keys needed. Uses Ollama (local LLM) + pyttsx3 (Windows TTS).
 
-**Cloud providers** — uncomment keys in `.env`:
+**Cloud providers** — add keys to `.env`:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
@@ -82,7 +93,7 @@ OPENAI_API_KEY=sk-...
 ELEVENLABS_API_KEY=...
 ```
 
-Then set `llm_provider` / `tts_provider` in `config/default.yaml`.
+Then set `llm_provider` / `tts_provider` in `config/default.yaml`, or select them in the UI setup screen.
 
 ### Expected CLI Output (3P sample)
 
@@ -105,12 +116,6 @@ Then set `llm_provider` / `tts_provider` in `config/default.yaml`.
 ----------------------------------------
 ```
 
-### Run Sample 4P Match
-
-```bash
-uv run python -m carrom_caster.scripts.score_from_events scripts/sample_events_4p.json
-```
-
 ## Project Structure
 
 ```
@@ -121,25 +126,33 @@ carrom-caster/
 │   ├── default.yaml        # board dims, HSV ranges, LLM/TTS/DB settings
 │   └── prompts/wwe_commentary.txt
 ├── src/carrom_caster/
+│   ├── app.py              # composition root — wires all pipeline stages
+│   ├── config.py           # pydantic-settings config + secrets
 │   ├── domain/             # frozen dataclasses (Coin, Event, Player, MatchState)
 │   ├── scoring/            # rules engines (3P FFA, 4P partners) + Scorer
-│   ├── persistence/        # ✅ schema.py (SQLAlchemy Core tables) + repositories.py
+│   ├── persistence/        # schema.py (SQLAlchemy Core) + repositories
+│   ├── commentary/         # LLM clients, TTS engines, CommentaryEngine
+│   ├── vision/             # detector, tracker, calibration, event state machine
+│   ├── ui/
+│   │   ├── main_window.py          # QMainWindow, screen navigation
+│   │   ├── pipeline_thread.py      # QThread wrapping App
+│   │   └── screens/
+│   │       ├── setup_screen.py     # player entry, group management, providers
+│   │       ├── match_screen.py     # live scores, turn, queen state, commentary feed
+│   │       └── history_screen.py  # recent matches, score detail dialog
 │   ├── scripts/
-│   │   └── score_from_events.py  # CLI: JSON → score
-│   ├── vision/             # [future] detector, tracker, event_detector
-│   ├── commentary/         # [future] llm, tts, engine
-│   ├── ui/                 # [future] PySide6 screens
+│   │   └── score_from_events.py   # CLI: JSON event log → score
 │   └── utils/
 └── tests/
-    ├── unit/               # 111 tests (domain + scoring + persistence)
-    └── integration/        # [future] video clips
+    ├── unit/               # 165 tests (domain, scoring, persistence, commentary, vision)
+    └── integration/        # video clip fixtures + pipeline smoke tests
 ```
 
 ## Development Workflow
 
 ### Running Tests
 
-```bash
+```powershell
 # Fast unit tests (run on every save)
 uv run pytest tests/unit/ -v
 
@@ -155,7 +168,7 @@ uv run pytest tests/unit/ --cov=src/carrom_caster
 
 ### Linting & Type Checking
 
-```bash
+```powershell
 # Check code style + unused imports
 uv run ruff check src/ tests/
 
@@ -204,7 +217,7 @@ uv run mypy src/carrom_caster/domain src/carrom_caster/scoring
 
 Save as `test_match.json` then run:
 
-```bash
+```powershell
 uv run python -m carrom_caster.scripts.score_from_events test_match.json
 ```
 
@@ -215,8 +228,20 @@ uv run python -m carrom_caster.scripts.score_from_events test_match.json
 1. **Linear Pipeline** — each stage (source → detector → tracker → events → scorer → UI) is independently testable
 2. **Immutable Domain** — frozen dataclasses, state transitions return new instances
 3. **Pluggable Providers** — LLM, TTS, video source all behind `typing.Protocol`
-4. **Composition Root** — `app.py` (not yet written) is the only place adapters are wired
+4. **Composition Root** — `app.py` is the only place adapters are wired; UI and headless share the same `App` class
 5. **No Global State** — dependency injection everywhere; tests inject fakes
+
+### Pipeline
+
+```
+VideoSource → Calibration → Detector → Tracker → EventDetector ─┬─► Scorer → Repository (SQLite)
+                                                                 │
+                                                                 └─► CommentaryEngine → TTS → Speakers
+                                                                                  ▲
+                                                                         PySide6 UI (reads Repository + signals)
+```
+
+The UI wraps `App` in a `PipelineThread` (`QThread`). Game events cross the thread boundary via Qt signals — `state_updated(MatchState, commentary)` fires on the main thread after every event.
 
 ### MatchState Snapshot
 
@@ -270,11 +295,11 @@ Each milestone is shippable on its own.
 
 1. ✅ **Domain + Scoring** — JSON event log → score (CLI)
 2. ✅ **Persistence + Player Groups** — SQLite via SQLAlchemy Core, save/load groups + match history
-3. 🔜 **Commentary Engine** — LLM + TTS, debouncing
-4. 🔜 **Vision Pipeline** — phone camera → events
-5. 🔜 **Wire Headless** — full pipeline from camera to score + audio
-6. 🔜 **UI** — PySide6 desktop app
-7. 🔜 **Polish** — better voices, settings UI, installer
+3. ✅ **Commentary Engine** — LLM + TTS, debouncing, pluggable providers
+4. ✅ **Vision Pipeline** — phone camera → events; tested on recorded clips
+5. ✅ **Wire Headless** — full pipeline from camera to score + audio, persisted
+6. ✅ **UI** — PySide6 desktop app: setup screen, live match screen, score lookup
+7. 🔜 **Polish** — ElevenLabs voices, settings UI, board calibration wizard, Windows installer
 
 ## Configuration
 
@@ -331,13 +356,13 @@ camera:
 
 **Test a change:**
 
-```bash
+```powershell
 uv run pytest tests/unit/scoring/ -v
 ```
 
 **Format before commit:**
 
-```bash
+```powershell
 uv run ruff check --fix src/ tests/
 uv run ruff format src/ tests/
 ```
@@ -346,32 +371,38 @@ uv run ruff format src/ tests/
 
 ### Tests fail with import errors
 
-```bash
-# Sync dependencies
-uv sync
-
-# Re-run
+```powershell
+uv sync --extra vision --extra commentary --extra ui
 uv run pytest tests/unit/
 ```
 
 ### "No module named carrom_caster"
 
-```bash
+```powershell
 # Make sure you're in the project root (carrom-caster/)
 cd D:\Projects\Personal\CarromCommentor\carrom-caster
 uv run pytest tests/unit/
 ```
 
-### CLI shows "File not found" for sample_events_3p.json
+### UI won't open — "PySide6 not installed"
 
-```bash
-uv run python -m carrom_caster.scripts.score_from_events scripts/sample_events_3p.json
+```powershell
+uv sync --extra ui
+uv run python -m carrom_caster
 ```
 
-## Next Steps
+### Camera stream won't connect
 
-- **Run tests** to validate the scoring rules
-- **Explore the code** — start with `src/carrom_caster/domain/match.py` to understand MatchState
+- Confirm phone and PC are on same Wi-Fi network
+- Open IP Webcam on phone, note the URL shown (e.g. `http://192.168.1.x:8080/video`)
+- Paste it into the Camera URL field on the setup screen
+- Test in a browser first — you should see the MJPEG stream
+
+### CLI shows "File not found" for sample_events_3p.json
+
+```powershell
+uv run python -m carrom_caster.scripts.score_from_events scripts/sample_events_3p.json
+```
 
 ## License
 

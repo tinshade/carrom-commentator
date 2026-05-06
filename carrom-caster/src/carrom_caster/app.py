@@ -81,8 +81,8 @@ class App:
 
                 for ev in events:
                     state = self._scorer.apply(state, ev)
-                    self._commentary.on_event(ev, state)
-                    self._on_event(ev, state)
+                    commentary_text = self._commentary.on_event(ev, state)
+                    self._on_event(ev, state, commentary_text)
 
                 if raw.meta.index % _SAVE_EVERY_N_FRAMES == 0:
                     self._match_repo.save(state)
@@ -99,7 +99,11 @@ class App:
         )
         return state
 
-    def _on_event(self, event: GameEvent, state: MatchState) -> None:
+    def stop(self) -> None:
+        """Close the video source so the pipeline loop exits on the next read."""
+        self._source.close()
+
+    def _on_event(self, event: GameEvent, state: MatchState, commentary: str | None = None) -> None:
         """Hook for subclasses (e.g. UI layer). Default: structured log."""
         log.info(
             "game_event",

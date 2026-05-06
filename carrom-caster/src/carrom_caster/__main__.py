@@ -1,9 +1,11 @@
 """
 Entry point: python -m carrom_caster
 
-Wires all components from config and runs the headless pipeline.
+Default: launches the PySide6 UI.
+Pass --headless to run the pipeline directly from CLI args.
+
 Requires vision + commentary extras:
-    uv sync --extra vision --extra commentary
+    uv sync --extra vision --extra commentary --extra ui
 """
 from __future__ import annotations
 
@@ -35,6 +37,7 @@ from carrom_caster.vision.tracker import CoinTracker
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Carrom Caster — live commentary + scoring")
+    p.add_argument("--headless", action="store_true", help="Run CLI pipeline without UI")
     p.add_argument("--players", nargs="+", default=["Player 1", "Player 2", "Player 3"])
     p.add_argument("--mode", choices=["3P_FFA", "4P_PARTNERS"], default="3P_FFA")
     p.add_argument("--config", default="config/default.yaml")
@@ -86,6 +89,19 @@ def _print_result(state) -> None:
 
 def main() -> int:
     args = _parse_args()
+
+    if not args.headless:
+        try:
+            from PySide6.QtWidgets import QApplication
+            from carrom_caster.ui.main_window import MainWindow
+        except ImportError:
+            print("PySide6 not installed. Run: uv sync --extra ui", file=sys.stderr)
+            return 1
+        qt_app = QApplication(sys.argv)
+        window = MainWindow(config_path=args.config)
+        window.show()
+        return qt_app.exec()
+
 
     try:
         cfg = AppConfig.load(args.config)
